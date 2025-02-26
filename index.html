@@ -141,7 +141,7 @@
             const classLists = document.getElementById("classLists");
 
             onValue(ref(database, "classData"), (snapshot) => {
-                classLists.innerHTML = ""; // ✅ 기존 목록 초기화 (중복 방지)
+                classLists.innerHTML = "";
 
                 let data = snapshot.val() || {};
                 let groupedData = {};
@@ -178,7 +178,7 @@
         window.onload = loadData;
         document.getElementById("saveBtn").addEventListener("click", () => {
             saveData();
-            loadData(); // ✅ 저장 후 바로 리스트 갱신
+            loadData();
         });
     </script>
 </body>
