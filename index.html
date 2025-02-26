@@ -55,22 +55,16 @@
             color: #f39c12;
             margin-top: 10px;
         }
-        button {
-            background-color: #6c5ce7;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
     </style>
 </head>
 <body>
     <div class="input-container">
         <h2>연무중 반 정보 입력하기</h2>
-        <input type="number" id="classNum" placeholder="반 번호 입력" min="1" max="12">
+        <input type="number" id="classNum" placeholder="반 입력" min="1" max="12">
         <input type="text" id="name" placeholder="이름 입력">
         <button id="saveBtn">저장하기</button>
         <p id="message" class="error"></p>
-        <p class="warning">(*2학년 전용입니다, 장난으로 입력하지 마세요, 입력하고나니까 페이지가 이상해요 -> 새로고침)</p>
+        <p class="warning">(*2학년 전용입니다, 장난으로 입력하지 마세요)</p>
     </div>
     <div id="classLists"></div>
     <div class="developer-info">
@@ -115,8 +109,9 @@
             set(newEntryRef, { classNum, name })
                 .then(() => {
                     message.textContent = "저장되었습니다!";
-                    document.getElementById("classNum").value = "";
-                    document.getElementById("name").value = "";
+                    setTimeout(() => {
+                        location.reload(); // 입력 후 자동 새로고침
+                    }, 500); // 0.5초 후 새로고침
                 })
                 .catch((error) => {
                     console.error("저장 오류:", error);
