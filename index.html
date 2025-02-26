@@ -4,6 +4,131 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>반 정보 입력</title>
+    <script type="module">
+        // Firebase SDK 불러오기
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyC0vLUUUZjb1OVe84Cm7i7lgliBxbEwgs8",
+            authDomain: "hrhhrrhr-608cf.firebaseapp.com",
+            databaseURL: "https://hrhhrrhr-608cf-default-rtdb.firebaseio.com",
+            projectId: "hrhhrrhr-608cf",
+            storageBucket: "hrhhrrhr-608cf.firebasestorage.app",
+            messagingSenderId: "730488926761",
+            appId: "1:730488926761:web:6a0d9b1a8820c82ebc2238",
+            measurementId: "G-HNSD47GDT0"
+        };
+
+        // Firebase 초기화
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // 🚨 검열기 (욕설 필터링)
+        function containsBannedWords(name) {
+            const bannedWords = ["바보", "멍청이", "씨발", "시발", "좆까", "ㅅㅅ", "섹스", "뒤져, "ㄷㅈ", "ㅆㅂ", "ㅅㅂ", "ㅂㅂ", "지랄", "ㅈㄹ", "왜그살", "니애미", "ㄴㅇㅁ", "니엄마", "장애"];
+            return bannedWords.some(word => name.includes(word));
+        }
+
+        // ✅ 데이터 저장
+        async function saveData() {
+            const classNum = document.getElementById("classNum").value;
+            const name = document.getElementById("name").value.trim();
+
+            if (!classNum || !name) {
+                showMessage("반 번호와 이름을 입력하세요!", true);
+                return;
+            }
+
+            // 🚨 반 번호 유효성 검사 (1~12 사이)
+            if (classNum < 1 || classNum > 12) {
+                showMessage("반 번호는 1~12 사이여야 합니다!", true);
+                return;
+            }
+
+            if (containsBannedWords(name)) {
+                showMessage("사용할 수 없는 이름입니다!", true);
+                return;
+            }
+
+            const dbRef = ref(database, "classData");
+            const snapshot = await get(dbRef);
+            let data = snapshot.exists() ? snapshot.val() : {};
+
+            for (let key in data) {
+                if (data[key].name === name && data[key].classNum === classNum) {
+                    showMessage("이미 같은 반에 같은 이름이 있습니다!", true);
+                    return;
+                }
+            }
+
+            const newKey = new Date().getTime();
+            set(ref(database, "classData/" + newKey), { classNum, name });
+
+            showMessage("저장되었습니다!", false);
+            loadData();
+        }
+
+        // ✅ 데이터 불러오기
+        async function loadData() {
+            const classLists = document.getElementById("classLists");
+            classLists.innerHTML = "";
+            const dbRef = ref(database, "classData");
+            const snapshot = await get(dbRef);
+            let data = snapshot.exists() ? snapshot.val() : {};
+
+            const groupedData = {};
+            for (let key in data) {
+                let entry = data[key];
+                if (!groupedData[entry.classNum]) {
+                    groupedData[entry.classNum] = [];
+                }
+                groupedData[entry.classNum].push(entry);
+            }
+
+            for (let classNum in groupedData) {
+                const classContainer = document.createElement("div");
+                classContainer.classList.add("class-container");
+                const className = document.createElement("div");
+                className.classList.add("class-name");
+                className.textContent = `👥 ${classNum}반 학생 목록`;
+                classContainer.appendChild(className);
+
+                groupedData[classNum].forEach(entry => {
+                    const studentBox = document.createElement("div");
+                    studentBox.classList.add("student-box");
+                    studentBox.textContent = entry.name;
+
+                    // 🚨 같은 이름이 다른 반에도 있으면 빨간색 표시
+                    let isDuplicate = Object.values(data).some(e => e.name === entry.name && e.classNum !== entry.classNum);
+                    if (isDuplicate) {
+                        studentBox.classList.add("red");
+                    }
+
+                    classContainer.appendChild(studentBox);
+                });
+
+                classLists.appendChild(classContainer);
+            }
+        }
+
+        // ✅ 경고 메시지 표시 (애니메이션 효과 추가)
+        function showMessage(msg, isError) {
+            const messageBox = document.getElementById("message");
+            messageBox.textContent = msg;
+            messageBox.style.color = isError ? "red" : "green";
+            messageBox.style.opacity = "1";
+            messageBox.style.transform = "translateY(-10px)";
+            setTimeout(() => {
+                messageBox.style.opacity = "0";
+                messageBox.style.transform = "translateY(0)";
+            }, 2000);
+        }
+
+        window.onload = loadData;
+        window.saveData = saveData;
+    </script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -26,6 +151,10 @@
             border: 1px solid #ccc;
             border-radius: 5px;
         }
+        .message {
+            transition: all 0.5s ease-in-out;
+            opacity: 0;
+        }
         .class-container {
             width: 40%;
             margin: 20px auto;
@@ -39,7 +168,6 @@
             font-size: 18px;
             font-weight: bold;
             margin-bottom: 10px;
-            text-align: left;
         }
         .student-box {
             background: #f1f1f1;
@@ -50,143 +178,18 @@
         .red {
             color: red;
         }
-        .message {
-            font-size: 14px;
-            color: #27ae60;
-            opacity: 0;
-            transition: opacity 0.5s ease-in-out;
-        }
-        .error {
-            color: red;
-        }
-        .warning {
-            font-size: 12px;
-            color: #f39c12;
-            margin-bottom: 10px;
-        }
-        .developer-info {
-            margin-top: 10px;
-            font-size: 12px;
-            color: gray;
-        }
-        button {
-            background-color: #6c5ce7;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
     </style>
 </head>
 <body>
     <div class="input-container">
         <h2>연무중 반 정보 입력하기</h2>
         <p class="warning">(*연무중 2학년 전용, 장난으로 입력하지 마세요)</p>
-        <input type="number" id="classNum" placeholder="반 번호 입력" min="1" max="12">
+        <input type="number" id="classNum" placeholder="반 번호 입력 (1~12)" min="1" max="12">
         <input type="text" id="name" placeholder="이름 입력">
-        <button id="saveButton">저장하기</button>
+        <button onclick="saveData()">저장하기</button>
         <p id="message" class="message"></p>
-        <p class="developer-info">Developer - Discord: ste.ki | Instargram: yeojix_</p>
-        <p class="developer-info">"오타, 문의, 이름 내려주세요" 디코 혹은 인스타로 연락주세요</p>
+        <p>Developer - 2학년 6반 정지윤 (Discord: ste.ki)</p>
     </div>
     <div id="classLists"></div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyC0vLUUUZjb1OVe84Cm7i7lgliBxbEwgs8",
-            authDomain: "hrhhrrhr-608cf.firebaseapp.com",
-            databaseURL: "https://hrhhrrhr-608cf-default-rtdb.firebaseio.com",
-            projectId: "hrhhrrhr-608cf",
-            storageBucket: "hrhhrrhr-608cf.appspot.com",
-            messagingSenderId: "730488926761",
-            appId: "1:730488926761:web:6a0d9b1a8820c82ebc2238",
-            measurementId: "G-HNSD47GDT0"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-
-        function showMessage(msg, isError = false) {
-            const messageEl = document.getElementById("message");
-            messageEl.textContent = msg;
-            messageEl.className = isError ? "message error" : "message";
-            messageEl.style.opacity = "1";
-            setTimeout(() => {
-                messageEl.style.opacity = "0";
-            }, 3000);
-        }
-
-        async function saveData() {
-            const classNum = document.getElementById("classNum").value;
-            const name = document.getElementById("name").value;
-
-            if (!classNum || !name) {
-                showMessage("반 번호와 이름을 입력하세요!", true);
-                return;
-            }
-
-            const dbRef = ref(database, "classData");
-            const snapshot = await get(dbRef);
-            let data = snapshot.exists() ? snapshot.val() : {};
-
-            for (let key in data) {
-                if (data[key].name === name && data[key].classNum === classNum) {
-                    showMessage("이미 같은 반에 같은 이름이 있습니다!", true);
-                    return;
-                }
-            }
-
-            const newKey = new Date().getTime();
-            set(ref(database, "classData/" + newKey), { classNum, name });
-
-            showMessage("저장되었습니다!", false);
-            loadData();
-        }
-
-        async function loadData() {
-            const classLists = document.getElementById("classLists");
-            classLists.innerHTML = "";
-            const dbRef = ref(database, "classData");
-            const snapshot = await get(dbRef);
-            let data = snapshot.exists() ? snapshot.val() : {};
-
-            let groupedData = {};
-            Object.values(data).forEach(entry => {
-                if (!groupedData[entry.classNum]) {
-                    groupedData[entry.classNum] = [];
-                }
-                groupedData[entry.classNum].push(entry);
-            });
-
-            let allNames = Object.values(data).map(entry => entry.name);
-            
-            for (let classNum in groupedData) {
-                const classContainer = document.createElement("div");
-                classContainer.classList.add("class-container");
-                const className = document.createElement("div");
-                className.classList.add("class-name");
-                className.textContent = `👥 ${classNum}반 학생 목록`;
-                classContainer.appendChild(className);
-
-                groupedData[classNum].forEach(entry => {
-                    const studentBox = document.createElement("div");
-                    studentBox.classList.add("student-box");
-                    studentBox.textContent = entry.name;
-
-                    if (allNames.filter(n => n === entry.name).length > 1) {
-                        studentBox.classList.add("red");
-                    }
-                    classContainer.appendChild(studentBox);
-                });
-
-                classLists.appendChild(classContainer);
-            }
-        }
-
-        document.getElementById("saveButton").addEventListener("click", saveData);
-        window.onload = loadData;
-    </script>
 </body>
 </html>
