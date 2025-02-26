@@ -47,37 +47,22 @@
             border-radius: 5px;
             margin-bottom: 5px;
         }
-        .red {
-            color: red;
-        }
-        .warning {
-            font-size: 14px;
-            color: #f39c12;
-            margin-top: 10px;
-        }
     </style>
 </head>
 <body>
     <div class="input-container">
         <h2>연무중 반 정보 입력하기</h2>
-        <input type="number" id="classNum" placeholder="반 입력" min="1" max="12">
+        <input type="number" id="classNum" placeholder="반 번호 입력" min="1" max="12">
         <input type="text" id="name" placeholder="이름 입력">
         <button id="saveBtn">저장하기</button>
         <p id="message" class="error"></p>
-        <p class="warning">(*2학년 전용입니다, 장난으로 입력하지 마세요)</p>
     </div>
     <div id="classLists"></div>
-    <div class="developer-info">
-        <p>개발자: 2학년 6반 정지윤 (Discord: ste.ki)</p>
-    </div>
 
-    <!-- Firebase SDK -->
     <script type="module">
-        // Firebase SDK 불러오기
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
         import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
-        // Firebase 설정
         const firebaseConfig = {
             apiKey: "AIzaSyC0vLUUUZjb1OVe84Cm7i7lgliBxbEwgs8",
             authDomain: "hrhhrrhr-608cf.firebaseapp.com",
@@ -89,11 +74,9 @@
             measurementId: "G-HNSD47GDT0"
         };
 
-        // Firebase 초기화
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
-        // 데이터 저장 함수
         function saveData() {
             const classNum = document.getElementById("classNum").value;
             const name = document.getElementById("name").value;
@@ -104,27 +87,26 @@
                 return;
             }
 
-            // Firebase Realtime Database에 저장
             const newEntryRef = push(ref(database, "classData"));
             set(newEntryRef, { classNum, name })
                 .then(() => {
                     message.textContent = "저장되었습니다!";
                     setTimeout(() => {
-                        location.reload(); // 입력 후 자동 새로고침
-                    }, 500); // 0.5초 후 새로고침
+                        location.reload();
+                    }, 500);
                 })
                 .catch((error) => {
                     console.error("저장 오류:", error);
-                    message.textContent = "저장에 실패했습니다. 콘솔을 확인하세요!";
+                    message.textContent = "저장에 실패했습니다!";
                 });
         }
 
-        // 데이터 불러오기 및 화면 표시
         function loadData() {
             const classLists = document.getElementById("classLists");
-            classLists.innerHTML = "";
 
             onValue(ref(database, "classData"), (snapshot) => {
+                classLists.innerHTML = ""; // ✅ 기존 목록 초기화 (중복 방지)
+
                 let data = snapshot.val() || {};
                 let groupedData = {};
 
@@ -157,10 +139,7 @@
             });
         }
 
-        // 페이지 로드 시 데이터 불러오기
         window.onload = loadData;
-
-        // 저장 버튼 이벤트 리스너 추가 (초기화 후 실행되도록)
         document.getElementById("saveBtn").addEventListener("click", saveData);
     </script>
 </body>
