@@ -55,6 +55,12 @@
             color: #f39c12;
             margin-top: 10px;
         }
+        button {
+            background-color: #6c5ce7;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -62,7 +68,7 @@
         <h2>연무중 반 정보 입력하기</h2>
         <input type="number" id="classNum" placeholder="반 번호 입력" min="1" max="12">
         <input type="text" id="name" placeholder="이름 입력">
-        <button onclick="saveData()">저장하기</button>
+        <button id="saveBtn">저장하기</button>
         <p id="message" class="error"></p>
         <p class="warning">(*2학년 전용입니다, 장난으로 입력하지 마세요)</p>
     </div>
@@ -158,6 +164,9 @@
 
         // 페이지 로드 시 데이터 불러오기
         window.onload = loadData;
+
+        // 저장 버튼 이벤트 리스너 추가 (초기화 후 실행되도록)
+        document.getElementById("saveBtn").addEventListener("click", saveData);
     </script>
 </body>
 </html>
