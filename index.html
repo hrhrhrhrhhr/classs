@@ -35,37 +35,43 @@
         async function saveData() {
             const classNum = document.getElementById("classNum").value;
             const name = document.getElementById("name").value.trim();
-
+        
             if (!classNum || !name) {
                 showMessage("반 번호와 이름을 입력하세요!", true);
                 return;
             }
-
+        
             // 🚨 반 번호 유효성 검사 (1~12 사이)
             if (classNum < 1 || classNum > 12) {
                 showMessage("반 번호는 1~12 사이여야 합니다!", true);
                 return;
             }
-
+        
+            // 🚨 이름 길이 제한 (1~5글자)
+            if (name.length < 1 || name.length > 5) {
+                showMessage("이름은 1~5글자로 입력하세요!", true);
+                return;
+            }
+        
             if (containsBannedWords(name)) {
                 showMessage("사용할 수 없는 이름입니다!", true);
                 return;
             }
-
+        
             const dbRef = ref(database, "classData");
             const snapshot = await get(dbRef);
             let data = snapshot.exists() ? snapshot.val() : {};
-
+        
             for (let key in data) {
                 if (data[key].name === name && data[key].classNum === classNum) {
                     showMessage("이미 같은 반에 같은 이름이 있습니다!", true);
                     return;
                 }
             }
-
+        
             const newKey = new Date().getTime();
             set(ref(database, "classData/" + newKey), { classNum, name });
-
+        
             showMessage("저장되었습니다!", false);
             loadData();
         }
