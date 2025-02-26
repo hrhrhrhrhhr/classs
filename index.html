@@ -17,25 +17,6 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            position: relative;
-        }
-        .input-container h2 {
-            margin-bottom: 5px;
-        }
-        .warning {
-            font-size: 14px;
-            color: #f39c12;
-            margin-bottom: 15px;
-        }
-        .message {
-            font-size: 14px;
-            color: green;
-            margin-top: 10px;
-            opacity: 0;
-            transition: opacity 0.5s ease-in-out;
-        }
-        .error {
-            color: red;
         }
         .input-container input, .input-container button {
             display: block;
@@ -58,6 +39,7 @@
             font-size: 18px;
             font-weight: bold;
             margin-bottom: 10px;
+            text-align: left;
         }
         .student-box {
             background: #f1f1f1;
@@ -68,6 +50,25 @@
         .red {
             color: red;
         }
+        .message {
+            font-size: 14px;
+            color: #27ae60;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .error {
+            color: red;
+        }
+        .warning {
+            font-size: 12px;
+            color: #f39c12;
+            margin-bottom: 10px;
+        }
+        .developer-info {
+            margin-top: 10px;
+            font-size: 12px;
+            color: gray;
+        }
         button {
             background-color: #6c5ce7;
             color: white;
@@ -75,109 +76,6 @@
             cursor: pointer;
         }
     </style>
-    <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
-
-    // Firebase 설정
-    const firebaseConfig = {
-        apiKey: "AIzaSyC0vLUUUZjb1OVe84Cm7i7lgliBxbEwgs8",
-        authDomain: "hrhhrrhr-608cf.firebaseapp.com",
-        databaseURL: "https://hrhhrrhr-608cf-default-rtdb.firebaseio.com",
-        projectId: "hrhhrrhr-608cf",
-        storageBucket: "hrhhrrhr-608cf.appspot.com",
-        messagingSenderId: "730488926761",
-        appId: "1:730488926761:web:6a0d9b1a8820c82ebc2238",
-        measurementId: "G-HNSD47GDT0"
-    };
-
-    // Firebase 초기화
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
-
-    function showMessage(msg, isError = false) {
-        const messageEl = document.getElementById("message");
-        messageEl.textContent = msg;
-        messageEl.className = isError ? "message error" : "message";
-        messageEl.style.opacity = "1";
-        setTimeout(() => {
-            messageEl.style.opacity = "0";
-        }, 3000);
-    }
-
-    async function saveData() {
-        const classNum = document.getElementById("classNum").value;
-        const name = document.getElementById("name").value;
-
-        if (!classNum || !name) {
-            showMessage("반 번호와 이름을 입력하세요!", true);
-            return;
-        }
-
-        const dbRef = ref(database, "classData");
-        const snapshot = await get(dbRef);
-
-        let data = snapshot.exists() ? snapshot.val() : {};
-
-        // 중복 검사
-        for (let key in data) {
-            if (data[key].name === name && data[key].classNum === classNum) {
-                showMessage("이미 같은 반에 같은 이름이 있습니다!", true);
-                return;
-            }
-        }
-
-        // 데이터 저장
-        const newKey = new Date().getTime();
-        set(ref(database, "classData/" + newKey), { classNum, name });
-
-        showMessage("저장되었습니다!", false);
-        loadData();
-    }
-
-    async function loadData() {
-        const classLists = document.getElementById("classLists");
-        classLists.innerHTML = "";
-        const dbRef = ref(database, "classData");
-        const snapshot = await get(dbRef);
-        let data = snapshot.exists() ? snapshot.val() : {};
-
-        let groupedData = {};
-        Object.values(data).forEach(entry => {
-            if (!groupedData[entry.classNum]) {
-                groupedData[entry.classNum] = [];
-            }
-            groupedData[entry.classNum].push(entry);
-        });
-
-        let allNames = Object.values(data).map(entry => entry.name);
-        
-        for (let classNum in groupedData) {
-            const classContainer = document.createElement("div");
-            classContainer.classList.add("class-container");
-            const className = document.createElement("div");
-            className.classList.add("class-name");
-            className.textContent = `👥 ${classNum}반 학생 목록`;
-            classContainer.appendChild(className);
-
-            groupedData[classNum].forEach(entry => {
-                const studentBox = document.createElement("div");
-                studentBox.classList.add("student-box");
-                studentBox.textContent = entry.name;
-
-                if (allNames.filter(n => n === entry.name).length > 1) {
-                    studentBox.classList.add("red");
-                }
-                classContainer.appendChild(studentBox);
-            });
-
-            classLists.appendChild(classContainer);
-        }
-    }
-
-    window.onload = loadData;
-    window.saveData = saveData;
-</script>
 </head>
 <body>
     <div class="input-container">
@@ -187,7 +85,107 @@
         <input type="text" id="name" placeholder="이름 입력">
         <button onclick="saveData()">저장하기</button>
         <p id="message" class="message"></p>
+        <p class="developer-info">Developer - 2학년 6반 정지윤 (Discord: ste.ki)</p>
     </div>
     <div id="classLists"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC0vLUUUZjb1OVe84Cm7i7lgliBxbEwgs8",
+            authDomain: "hrhhrrhr-608cf.firebaseapp.com",
+            databaseURL: "https://hrhhrrhr-608cf-default-rtdb.firebaseio.com",
+            projectId: "hrhhrrhr-608cf",
+            storageBucket: "hrhhrrhr-608cf.appspot.com",
+            messagingSenderId: "730488926761",
+            appId: "1:730488926761:web:6a0d9b1a8820c82ebc2238",
+            measurementId: "G-HNSD47GDT0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        function showMessage(msg, isError = false) {
+            const messageEl = document.getElementById("message");
+            messageEl.textContent = msg;
+            messageEl.className = isError ? "message error" : "message";
+            messageEl.style.opacity = "1";
+            setTimeout(() => {
+                messageEl.style.opacity = "0";
+            }, 3000);
+        }
+
+        async function saveData() {
+            const classNum = document.getElementById("classNum").value;
+            const name = document.getElementById("name").value;
+
+            if (!classNum || !name) {
+                showMessage("반 번호와 이름을 입력하세요!", true);
+                return;
+            }
+
+            const dbRef = ref(database, "classData");
+            const snapshot = await get(dbRef);
+            let data = snapshot.exists() ? snapshot.val() : {};
+
+            for (let key in data) {
+                if (data[key].name === name && data[key].classNum === classNum) {
+                    showMessage("이미 같은 반에 같은 이름이 있습니다!", true);
+                    return;
+                }
+            }
+
+            const newKey = new Date().getTime();
+            set(ref(database, "classData/" + newKey), { classNum, name });
+
+            showMessage("저장되었습니다!", false);
+            loadData();
+        }
+
+        async function loadData() {
+            const classLists = document.getElementById("classLists");
+            classLists.innerHTML = "";
+            const dbRef = ref(database, "classData");
+            const snapshot = await get(dbRef);
+            let data = snapshot.exists() ? snapshot.val() : {};
+
+            let groupedData = {};
+            Object.values(data).forEach(entry => {
+                if (!groupedData[entry.classNum]) {
+                    groupedData[entry.classNum] = [];
+                }
+                groupedData[entry.classNum].push(entry);
+            });
+
+            let allNames = Object.values(data).map(entry => entry.name);
+            
+            for (let classNum in groupedData) {
+                const classContainer = document.createElement("div");
+                classContainer.classList.add("class-container");
+                const className = document.createElement("div");
+                className.classList.add("class-name");
+                className.textContent = `👥 ${classNum}반 학생 목록`;
+                classContainer.appendChild(className);
+
+                groupedData[classNum].forEach(entry => {
+                    const studentBox = document.createElement("div");
+                    studentBox.classList.add("student-box");
+                    studentBox.textContent = entry.name;
+
+                    if (allNames.filter(n => n === entry.name).length > 1) {
+                        studentBox.classList.add("red");
+                    }
+                    classContainer.appendChild(studentBox);
+                });
+
+                classLists.appendChild(classContainer);
+            }
+        }
+
+        window.onload = loadData;
+        window.saveData = saveData; // ✅ 오류 해결
+    </script>
 </body>
 </html>
