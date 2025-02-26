@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>반 정보 입력</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -55,18 +57,12 @@
             color: #f39c12;
             margin-top: 10px;
         }
-        button {
-            background-color: #6c5ce7;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
     </style>
 </head>
 <body>
     <div class="input-container">
         <h2>연무중 반 정보 입력하기</h2>
-        <input type="number" id="classNum" placeholder="반 입력" min="1" max="12">
+        <input type="number" id="classNum" placeholder="반 번호 입력" min="1" max="12">
         <input type="text" id="name" placeholder="이름 입력">
         <button onclick="saveData()">저장하기</button>
         <p id="message" class="error"></p>
@@ -76,60 +72,93 @@
     <div class="developer-info">
         <p>개발자: 2학년 6반 정지윤 (Discord: ste.ki)</p>
     </div>
+    
     <script>
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyC0vLUUUZjb1OVe84Cm7i7lgliBxbEwgs8",
+            authDomain: "hrhhrrhr-608cf.firebaseapp.com",
+            databaseURL: "https://hrhhrrhr-608cf-default-rtdb.firebaseio.com",
+            projectId: "hrhhrrhr-608cf",
+            storageBucket: "hrhhrrhr-608cf.firebasestorage.app",
+            messagingSenderId: "730488926761",
+            appId: "1:730488926761:web:6a0d9b1a8820c82ebc2238",
+            measurementId: "G-HNSD47GDT0"
+        };
+
+        // Firebase 초기화
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // 데이터 저장 함수
         function saveData() {
             const classNum = document.getElementById("classNum").value;
             const name = document.getElementById("name").value;
             const message = document.getElementById("message");
+
             if (classNum < 1 || classNum > 12) {
                 message.textContent = "반 번호는 1부터 12 사이여야 합니다!";
                 return;
             }
-            let data = JSON.parse(localStorage.getItem("classData")) || [];
             if (!name) {
                 message.textContent = "이름을 입력하세요!";
                 return;
             }
-            const existing = data.find(entry => entry.name === name);
-            if (existing && existing.classNum === classNum) {
-                message.textContent = "이미 같은 반에 같은 이름이 등록되어 있습니다!";
-                return;
-            }
-            data.push({ classNum, name });
-            localStorage.setItem("classData", JSON.stringify(data));
-            message.textContent = "";
-            loadData();
+
+            // Firebase Realtime Database에 저장
+            const newEntryRef = database.ref("classData").push();
+            newEntryRef.set({ classNum, name });
+
+            message.textContent = "저장되었습니다!";
+            document.getElementById("classNum").value = "";
+            document.getElementById("name").value = "";
         }
+
+        // 데이터 불러오기 및 화면에 표시
         function loadData() {
             const classLists = document.getElementById("classLists");
             classLists.innerHTML = "";
-            let data = JSON.parse(localStorage.getItem("classData")) || [];
-            const groupedData = data.reduce((groups, entry) => {
-                if (!groups[entry.classNum]) {
-                    groups[entry.classNum] = [];
-                }
-                groups[entry.classNum].push(entry);
-                return groups;
-            }, {});
-            for (let classNum in groupedData) {
-                const classContainer = document.createElement("div");
-                classContainer.classList.add("class-container");
-                const className = document.createElement("div");
-                className.classList.add("class-name");
-                className.textContent = `👥 ${classNum}반 학생 목록`;
-                classContainer.appendChild(className);
-                groupedData[classNum].forEach(entry => {
-                    const studentBox = document.createElement("div");
-                    studentBox.classList.add("student-box");
-                    studentBox.textContent = entry.name;
-                    if (data.some(e => e.name === entry.name && e.classNum !== entry.classNum)) {
-                        studentBox.classList.add("red");
+
+            database.ref("classData").once("value", (snapshot) => {
+                let data = snapshot.val() || {};
+                let groupedData = {};
+
+                // 데이터를 반 번호별로 정리
+                Object.values(data).forEach(entry => {
+                    if (!groupedData[entry.classNum]) {
+                        groupedData[entry.classNum] = [];
                     }
-                    classContainer.appendChild(studentBox);
+                    groupedData[entry.classNum].push(entry);
                 });
-                classLists.appendChild(classContainer);
-            }
+
+                // 화면에 표시
+                for (let classNum in groupedData) {
+                    const classContainer = document.createElement("div");
+                    classContainer.classList.add("class-container");
+
+                    const className = document.createElement("div");
+                    className.classList.add("class-name");
+                    className.textContent = `👥 ${classNum}반 학생 목록`;
+
+                    classContainer.appendChild(className);
+
+                    groupedData[classNum].forEach(entry => {
+                        const studentBox = document.createElement("div");
+                        studentBox.classList.add("student-box");
+                        studentBox.textContent = entry.name;
+                        classContainer.appendChild(studentBox);
+                    });
+
+                    classLists.appendChild(classContainer);
+                }
+            });
         }
+
+        // Firebase 데이터 변경 감지 (실시간 업데이트)
+        database.ref("classData").on("value", () => {
+            loadData();
+        });
+
         window.onload = loadData;
     </script>
 </body>
