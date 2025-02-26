@@ -83,7 +83,7 @@
         <p class="warning">(*연무중 2학년 전용, 장난으로 입력하지 마세요)</p>
         <input type="number" id="classNum" placeholder="반 번호 입력" min="1" max="12">
         <input type="text" id="name" placeholder="이름 입력">
-        <button onclick="saveData()">저장하기</button>
+        <button id="saveButton">저장하기</button>
         <p id="message" class="message"></p>
         <p class="developer-info">Developer - 2학년 6반 정지윤 (Discord: ste.ki)</p>
     </div>
@@ -184,8 +184,8 @@
             }
         }
 
+        document.getElementById("saveButton").addEventListener("click", saveData);
         window.onload = loadData;
-        window.saveData = saveData; // ✅ 오류 해결
     </script>
 </body>
 </html>
