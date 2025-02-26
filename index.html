@@ -17,6 +17,15 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        .input-container h2 {
+            margin-bottom: 5px;
+        }
+        .warning {
+            font-size: 14px;
+            color: #f39c12;
+            margin-bottom: 15px;
         }
         .input-container input, .input-container button {
             display: block;
@@ -47,21 +56,33 @@
             border-radius: 5px;
             margin-bottom: 5px;
         }
-        button {
-            background-color: #6c5ce7;
+        .message-box {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.7);
             color: white;
-            font-weight: bold;
-            cursor: pointer;
+            border-radius: 5px;
+            opacity: 0;
+            transition: opacity 0.5s, transform 0.5s;
+        }
+        .message-box.show {
+            opacity: 1;
+            transform: translate(-50%, -60px);
         }
     </style>
 </head>
 <body>
     <div class="input-container">
         <h2>연무중 반 정보 입력하기</h2>
+        <p class="warning">(*연무중 2학년 전용, 장난으로 입력하지 마세요)</p>
+        <div id="messageBox" class="message-box"></div>
         <input type="number" id="classNum" placeholder="반 번호 입력" min="1" max="12">
         <input type="text" id="name" placeholder="이름 입력">
         <button id="saveBtn">저장하기</button>
-        <p id="message" class="error"></p>
     </div>
     <div id="classLists"></div>
 
@@ -83,27 +104,36 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
+        function showMessage(text, type = "success") {
+            const messageBox = document.getElementById("messageBox");
+            messageBox.textContent = text;
+            messageBox.style.backgroundColor = type === "error" ? "#e74c3c" : "#2ecc71";
+            messageBox.classList.add("show");
+
+            setTimeout(() => {
+                messageBox.classList.remove("show");
+            }, 2000);
+        }
+
         function saveData() {
             const classNum = document.getElementById("classNum").value;
             const name = document.getElementById("name").value;
-            const message = document.getElementById("message");
 
             if (!classNum || !name) {
-                message.textContent = "반 번호와 이름을 입력하세요!";
+                showMessage("반 번호와 이름을 입력하세요!", "error");
                 return;
             }
 
             const newEntryRef = push(ref(database, "classData"));
             set(newEntryRef, { classNum, name })
                 .then(() => {
-                    message.textContent = "저장되었습니다!";
-                    setTimeout(() => {
-                        location.reload();
-                    }, 500);
+                    showMessage("저장되었습니다!");
+                    document.getElementById("classNum").value = "";
+                    document.getElementById("name").value = "";
                 })
                 .catch((error) => {
                     console.error("저장 오류:", error);
-                    message.textContent = "저장에 실패했습니다!";
+                    showMessage("저장에 실패했습니다!", "error");
                 });
         }
 
@@ -146,7 +176,10 @@
         }
 
         window.onload = loadData;
-        document.getElementById("saveBtn").addEventListener("click", saveData);
+        document.getElementById("saveBtn").addEventListener("click", () => {
+            saveData();
+            loadData(); // ✅ 저장 후 바로 리스트 갱신
+        });
     </script>
 </body>
 </html>
